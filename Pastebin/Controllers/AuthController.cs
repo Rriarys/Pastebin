@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Pastebin.DTOs;
 using Pastebin.Services;
 
@@ -9,10 +10,12 @@ namespace Pastebin.Controllers
     public class AuthController : ControllerBase
     {
         private readonly UserService _userService;
+        private readonly TokenService _tokenService;
 
-        public AuthController(UserService userService)
+        public AuthController(UserService userService, TokenService tokenService)
         {
             _userService = userService;
+            _tokenService = tokenService;
         }
 
         [HttpPost("register")]
@@ -32,6 +35,38 @@ namespace Pastebin.Controllers
 
             return BadRequest(result.Errors);
         }
+
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
+        {
+            var user = await _userService.AuthenticateUserAsync(loginDto);
+
+            if (user == null)
+            {
+                return Unauthorized("Неверные логин или пароль.");
+            }
+
+            var token = _tokenService.GenerateToken(user);
+
+            // Устанавливаем токен в куки
+            Response.Cookies.Append("AuthToken", token, new CookieOptions
+            {
+                HttpOnly = true,  // Защищаем от доступа через JavaScript
+                Secure = true,    // Только для https
+                SameSite = SameSiteMode.Strict // Защищаем от атак Cross-Site Request Forgery
+            });
+
+            return Ok(new { Token = token });
+        }
+
+        // Защищенный эндпоинт для проверки авторизации
+        [Authorize]
+        [HttpGet("secure-endpoint")]
+        public IActionResult GetSecureData()
+        {
+            return Ok("Доступ к защищенному ресурсу разрешен!");
+        }
+
     }
 
 }

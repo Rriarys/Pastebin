@@ -3,16 +3,15 @@ using Pastebin.Data;
 using Pastebin.Models;
 using Pastebin.DTOs;
 using Microsoft.EntityFrameworkCore;
-using Pastebin.Helpers;
 
 namespace Pastebin.Services
 {
     public class UserService
     {
         private readonly ApplicationDbContext _context;
-        private readonly IPasswordHasher _passwordHasher; // Хешировщик паролей
+        private readonly IPasswordHasher<User> _passwordHasher; // Хешировщик паролей
 
-        public UserService(ApplicationDbContext context, IPasswordHasher passwordHasher)
+        public UserService(ApplicationDbContext context, IPasswordHasher<User> passwordHasher)
         {
             _context = context;
             _passwordHasher = passwordHasher;
@@ -30,7 +29,7 @@ namespace Pastebin.Services
             }
 
             // Хеширование пароля
-            var passwordHash = _passwordHasher.HashPassword(registerDto.Password);
+            var passwordHash = _passwordHasher.HashPassword(null, registerDto.Password);
 
             // Создание нового пользователя
             var user = new User
@@ -46,6 +45,22 @@ namespace Pastebin.Services
             await _context.SaveChangesAsync();
 
             return IdentityResult.Success;
+        }
+
+        public async Task<User> AuthenticateUserAsync(LoginDto loginDto)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserName == loginDto.UserName);
+
+            if (user == null)
+                return null;
+
+            // Проверка пароля
+            var result = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, loginDto.Password);
+
+            if (result == PasswordVerificationResult.Failed)
+                return null;
+
+            return user;
         }
     }
 }
