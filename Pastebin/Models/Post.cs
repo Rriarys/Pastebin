@@ -6,6 +6,8 @@
 
         public required string PostHash { get; set; }
 
+        public required string PostTitle { get; set; }  // Название поста
+
         public int PostAuthorId { get; set; } //Внешний ключ
 
         public DateTime PostCreationDate { get; set; }

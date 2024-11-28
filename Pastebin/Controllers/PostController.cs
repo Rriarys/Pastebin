@@ -42,6 +42,7 @@ namespace Pastebin.Controllers
             var postDto = new PostDto
             {
                 PostHash = postHash,
+                PostTitle = createPostDto.PostTitle,  // Здесь передаем название поста
                 PostID = 123,  // Заглушка для ID
                 PostAuthorId = postAuthorId,  // Устанавливаем обязательное поле
                 UserName = createPostDto.UserName,  // Имя пользователя из DTO

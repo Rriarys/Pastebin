@@ -4,6 +4,7 @@
     {
         public required int PostID { get; set; }  // ID поста
         public required string PostHash { get; set; }  // Хэш поста
+        public required string PostTitle { get; set; } // Тайтл
         public required int PostAuthorId { get; set; }  // ID автора поста
         public required string UserName { get; set; }  // Имя автора (из User)
         public DateTime PostCreationDate { get; set; }  // Дата создания поста
