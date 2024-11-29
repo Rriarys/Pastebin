@@ -8,6 +8,8 @@ using System.Text;
 using Microsoft.AspNetCore.Identity;
 using Pastebin.Models;
 using Microsoft.OpenApi.Models;
+using Azure.Storage.Blobs;
+using Pastebin.Interfaces;
 
 namespace Pastebin
 {
@@ -18,8 +20,8 @@ namespace Pastebin
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.
-
             builder.Services.AddControllers();
+
             // Swagger
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen(c =>
@@ -56,13 +58,34 @@ namespace Pastebin
 
             // DbContext
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
-            options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+            // Получаем строку подключения для Azure Storage Blob
+            string connectionString = builder.Configuration["AzureStorage:ConnectionString"];
+
+            // Регистрация BlobServiceClient для DI
+            builder.Services.AddSingleton(new BlobServiceClient(connectionString));
+
+            // Регистрация BlobService (вместо Singleton — Scoped)
+            builder.Services.AddScoped<IBlobService, BlobService>();
 
             // Регистрация хешировщика паролей
             builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 
+            // Регистрация HashService с параметрами из конфигурации
+            builder.Services.AddScoped<IHashService>(serviceProvider =>
+            {
+                var salt = builder.Configuration["HashService:Salt"];
+                var minHashLength = int.Parse(builder.Configuration["HashService:MinHashLength"]);
+                return new HashService(salt, minHashLength);
+            });
+
+            // Регистрация сервисов
+            builder.Services.AddScoped<PostService>();
             builder.Services.AddScoped<UserService>();
             builder.Services.AddScoped<TokenService>();
+
+            // Настройка аутентификации
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>
                 {
@@ -77,7 +100,7 @@ namespace Pastebin
                     };
                 });
 
-            // Razor Pages
+            // Razor Pages (если они требуются)
             builder.Services.AddRazorPages();
 
             builder.Services.AddAuthorization();
@@ -93,15 +116,10 @@ namespace Pastebin
             }
 
             app.UseHttpsRedirection();
-
             app.UseAuthentication();
-
             app.UseAuthorization();
-
             app.MapRazorPages();
-
             app.MapControllers();
-
             app.Run();
         }
     }

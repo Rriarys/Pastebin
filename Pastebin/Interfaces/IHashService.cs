@@ -2,7 +2,7 @@
 {
     public interface IHashService
     {
-        string GenerateHash(int id);
+        string GenerateHash(string id);
 
         int DecodeHash(string hash);
     }

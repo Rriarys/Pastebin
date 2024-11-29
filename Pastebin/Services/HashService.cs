@@ -1,6 +1,7 @@
 ﻿using Pastebin.Interfaces;
-using Pastebin.Utils;
 using HashidsNet;
+using System.Text;
+using System.Security.Cryptography;
 
 namespace Pastebin.Services
 {
@@ -13,9 +14,13 @@ namespace Pastebin.Services
             _hashids = new Hashids(salt, minHashLength);
         }
 
-        public string GenerateHash(int id)
+        public string GenerateHash(string input)
         {
-            return _hashids.Encode(id);
+            using (var sha256 = SHA256.Create())
+            {
+                byte[] bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(input));
+                return BitConverter.ToString(bytes).Replace("-", "").ToLower();
+            }
         }
 
         public int DecodeHash(string hash)

@@ -12,27 +12,46 @@ namespace Pastebin.Services
             _blobServiceClient = blobServiceClient;
         }
 
-        public async Task<string> UploadTextAsync(string containerName,string fileName, string content)
+        public async Task<string> UploadTextAsync(string containerName, string fileName, string content)
         {
-            var containerClient = _blobServiceClient.
-                GetBlobContainerClient(containerName);
+            // Нормализуем имя контейнера (убираем недопустимые символы)
+            containerName = NormalizeBlobName(containerName);
+            fileName = NormalizeBlobName(fileName);
 
+            var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
             await containerClient.CreateIfNotExistsAsync();
 
             var blobClient = containerClient.GetBlobClient(fileName);
 
             using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(content));
-            await blobClient.UploadAsync(stream, true);
+            try
+            {
+                await blobClient.UploadAsync(stream, overwrite: true);
+            }
+            catch (Exception ex)
+            {
+                // Логируем ошибку
+                throw new InvalidOperationException("Error uploading blob", ex);
+            }
 
             return blobClient.Uri.ToString();
         }
 
         public async Task<string> GetBlobUrlAsync(string containerName, string fileName)
         {
+            containerName = NormalizeBlobName(containerName);
+            fileName = NormalizeBlobName(fileName);
+
             var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
             var blobClient = containerClient.GetBlobClient(fileName);
 
             return blobClient.Uri.ToString();
+        }
+
+        private string NormalizeBlobName(string name)
+        {
+            // Нормализуем имя: делаем его строчным и заменяем пробелы и другие недопустимые символы
+            return name.ToLower().Replace(" ", "-").Replace("_", "-");
         }
     }
 }

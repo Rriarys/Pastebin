@@ -1,7 +1,6 @@
-﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc; 
+﻿using Microsoft.AspNetCore.Mvc;
 using Pastebin.DTOs;
-using Pastebin.Models;
+using Pastebin.Services;
 
 namespace Pastebin.Controllers
 {
@@ -9,56 +8,57 @@ namespace Pastebin.Controllers
     [ApiController]
     public class PostController : ControllerBase
     {
-            // Заглушки для сервисов
-            /*private readonly IPostService _postService;
-            private readonly IHashService _hashService;
+        private readonly PostService _postService;
 
-            public PostController(IPostService postService, IHashService hashService)
-            {
-                _postService = postService;
-                _hashService = hashService;
-            }*/
+        // Внедрение зависимости
+        public PostController(PostService postService)
+        {
+            _postService = postService;
+        }
 
-            // POST: api/posts
-            [HttpPost]
+        // POST: api/posts
+        [HttpPost]
         public async Task<IActionResult> CreatePost([FromForm] CreatePostDto createPostDto)
         {
-            // Генерация хэша для поста
-            string postHash = "dummyhash"; // Заглушка для хэша
 
-            // Автоматическое определение даты создания
-            DateTime postCreationDate = DateTime.Now;
+            // Проверяем, аутентифицирован ли пользователь
+            var userName = User.Identity?.Name;
 
-            // Генерация TTL, если не передан (например, 1 день по умолчанию)
-            TimeSpan postTTL = createPostDto.PostTTL != TimeSpan.Zero ? createPostDto.PostTTL : TimeSpan.FromDays(1);
+            if (string.IsNullOrEmpty(userName))
+            {
+                return Unauthorized("User is not authenticated.");
+            }
 
-            // Рейтинг по умолчанию (пока не учитываем)
-            int postPopularityScore = 0;
+            // Использование PostService для создания поста
+            var post = await _postService.CreatePostAsync(
+                createPostDto.PostTitle,        // Название поста
+                createPostDto.Text,             // Текст поста 
+                userName,                       // Имя пользователя из токена 
+                createPostDto.PostTTL,          // TTL
+                createPostDto.IsPublic          // Публичность
+            );
 
-            // ID пользователя (например, получаем его через текущую сессию или иным способом)
-            int postAuthorId = 1; // Заглушка для ID пользователя
-
-            // Создаем PostDto для ответа
+            // Создаем DTO для ответа
             var postDto = new PostDto
             {
-                PostHash = postHash,
-                PostTitle = createPostDto.PostTitle,  // Здесь передаем название поста
-                PostID = 123,  // Заглушка для ID
-                PostAuthorId = postAuthorId,  // Устанавливаем обязательное поле
-                UserName = createPostDto.UserName,  // Имя пользователя из DTO
-                PostCreationDate = postCreationDate,  // Дата создания
-                PostTTL = postTTL,  // Время жизни
-                PostPopularityScore = postPopularityScore,  // Рейтинг
-                IsPublic = createPostDto.IsPublic,  // Публичность из запроса
-                PostAuthor = new UserDto  // Заглушка для информации о пользователе
+                PostHash = post.PostHash,
+                PostTitle = post.PostTitle,
+                PostID = post.PostID,
+                PostAuthorId = post.PostAuthorId,
+                UserName = userName,
+                PostCreationDate = post.PostCreationDate,
+                PostTTL = post.PostTTL,
+                PostPopularityScore = post.PostPopularityScore,
+                IsPublic = post.IsPublic,
+                PostAuthor = new UserDto
                 {
-                    UserId = postAuthorId,  // Заглушка для ID пользователя
-                    UserName = createPostDto.UserName  // Имя пользователя
+                    UserId = post.PostAuthorId,
+                    UserName = userName
                 }
             };
 
             // Возвращаем успешный ответ с PostDto
-            return CreatedAtAction(nameof(GetPost), new { postHash = postHash }, postDto);
+            return CreatedAtAction(nameof(GetPost), new { postHash = post.PostHash }, postDto);
         }
 
         // GET: api/posts/{postHash}
@@ -66,6 +66,7 @@ namespace Pastebin.Controllers
         public async Task<IActionResult> GetPost(string postHash)
         {
             // Заглушка для получения поста
+            // Например, вы можете использовать _postService для получения поста
             // var post = await _postService.GetPostAsync(postHash);
 
             // Пока возвращаем пустой объект
