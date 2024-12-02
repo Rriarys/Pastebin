@@ -5,6 +5,7 @@ namespace Pastebin.Data
 {
     public class ApplicationDbContext : DbContext
     {
+        #nullable disable
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
 
         public DbSet<Post> Posts { get; set; }

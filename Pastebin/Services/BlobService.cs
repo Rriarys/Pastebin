@@ -36,8 +36,8 @@ namespace Pastebin.Services
 
             return blobClient.Uri.ToString();
         }
-
-        public async Task<string> GetBlobUrlAsync(string containerName, string fileName)
+       
+        public async Task<string> GetBlobUrlAsync(string containerName, string fileName) // Асинхронен специально для будущих функций
         {
             containerName = NormalizeBlobName(containerName);
             fileName = NormalizeBlobName(fileName);

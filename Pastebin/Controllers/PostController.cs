@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Pastebin.DTOs;
 using Pastebin.Interfaces;
-using Pastebin.Models;
 using Pastebin.Services;
 
 namespace Pastebin.Controllers

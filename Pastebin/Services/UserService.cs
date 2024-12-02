@@ -27,7 +27,7 @@ namespace Pastebin.Services
             {
                 return IdentityResult.Failed(new IdentityError { Description = "Пользователь с таким именем или почтой уже существует" });
             }
-
+            #nullable disable
             // Хеширование пароля
             var passwordHash = _passwordHasher.HashPassword(null, registerDto.Password);
 

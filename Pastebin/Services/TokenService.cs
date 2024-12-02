@@ -23,7 +23,8 @@ namespace Pastebin.Services
                 new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString())
                 // Можно добавить другие claims, например, роли
             };
-
+            
+            #nullable disable
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
