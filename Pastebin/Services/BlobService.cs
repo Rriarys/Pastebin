@@ -48,6 +48,19 @@ namespace Pastebin.Services
             return blobClient.Uri.ToString();
         }
 
+        // Реализация метода удаления файла
+        public async Task DeleteBlobAsync(string containerName, string fileName)
+        {
+            containerName = NormalizeBlobName(containerName);
+            fileName = NormalizeBlobName(fileName);
+
+            var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
+            var blobClient = containerClient.GetBlobClient(fileName);
+
+            // Удаляем файл, если он существует
+            await blobClient.DeleteIfExistsAsync();
+        }
+
         private string NormalizeBlobName(string name)
         {
             // Нормализуем имя: делаем его строчным и заменяем пробелы и другие недопустимые символы

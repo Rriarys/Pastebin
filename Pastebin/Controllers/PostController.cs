@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Pastebin.DTOs;
+using Pastebin.Interfaces;
+using Pastebin.Models;
 using Pastebin.Services;
 
 namespace Pastebin.Controllers
@@ -9,55 +11,56 @@ namespace Pastebin.Controllers
     public class PostController : ControllerBase
     {
         private readonly PostService _postService;
+        private readonly IBlobService _blobService;
 
-        // Внедрение зависимости
-        public PostController(PostService postService)
+        public PostController(PostService postService, IBlobService blobService)
         {
             _postService = postService;
+            _blobService = blobService;
         }
 
         // POST: api/posts
         [HttpPost]
         public async Task<IActionResult> CreatePost([FromForm] CreatePostDto createPostDto)
         {
-
-            // Проверяем, аутентифицирован ли пользователь
             var userName = User.Identity?.Name;
 
             if (string.IsNullOrEmpty(userName))
             {
-                return Unauthorized("User is not authenticated.");
+                return Unauthorized(new { message = "User is not authenticated." });
             }
 
-            // Использование PostService для создания поста
             var post = await _postService.CreatePostAsync(
-                createPostDto.PostTitle,        // Название поста
-                createPostDto.Text,             // Текст поста 
-                userName,                       // Имя пользователя из токена 
-                createPostDto.PostTTL,          // TTL
-                createPostDto.IsPublic          // Публичность
+                createPostDto.PostTitle,
+                createPostDto.Text,
+                userName,
+                createPostDto.PostTTL,
+                createPostDto.IsPublic
             );
 
-            // Создаем DTO для ответа
+            if (post == null)
+            {
+                return BadRequest(new { message = "User not found" });
+            }
+
             var postDto = new PostDto
             {
-                PostHash = post.PostHash,   // Нее забыть вырезать это
-                PostTitle = post.PostTitle, 
-                PostID = post.PostID, // это
-                PostAuthorId = post.PostAuthorId, // это
+                PostHash = post.PostHash,
+                PostTitle = post.PostTitle,
+                PostID = post.PostID,
+                PostAuthorId = post.PostAuthorId,
                 UserName = userName,
                 PostCreationDate = post.PostCreationDate,
                 PostTTL = post.PostTTL,
                 PostPopularityScore = post.PostPopularityScore,
                 IsPublic = post.IsPublic,
-                PostAuthor = new UserDto // это
+                PostAuthor = new UserDto
                 {
                     UserId = post.PostAuthorId,
                     UserName = userName
                 }
             };
 
-            // Возвращаем успешный ответ с PostDto
             return CreatedAtAction(nameof(GetPost), new { postHash = post.PostHash }, postDto);
         }
 
@@ -65,23 +68,20 @@ namespace Pastebin.Controllers
         [HttpGet("{postHash}")]
         public async Task<IActionResult> GetPost(string postHash)
         {
-            // Получаем пост по хешу через сервис
             var post = await _postService.GetPostByHashAsync(postHash);
 
-            // Если пост не найден, возвращаем 404
             if (post == null)
             {
-                return NotFound("Post not found.");
+                return NotFound(new { message = "Post not found" });
             }
 
-            // Создаем DTO для ответа
             var postDto = new PostDto
             {
                 PostHash = post.PostHash,
                 PostTitle = post.PostTitle,
                 PostID = post.PostID,
                 PostAuthorId = post.PostAuthorId,
-                UserName = post.PostAuthor.UserName, // Имя автора
+                UserName = post.PostAuthor.UserName,
                 PostCreationDate = post.PostCreationDate,
                 PostTTL = post.PostTTL,
                 PostPopularityScore = post.PostPopularityScore,
@@ -93,27 +93,49 @@ namespace Pastebin.Controllers
                 }
             };
 
-            // Возвращаем информацию о посте
             return Ok(postDto);
         }
-
 
         // DELETE: api/posts/{postHash}
         [HttpDelete("{postHash}")]
         public async Task<IActionResult> DeletePost(string postHash)
         {
-            // Используем сервис для удаления поста
-            var success = await _postService.DeletePostAsync(postHash);
-
-            // Если пост не был найден или не удалось удалить, возвращаем 404
-            if (!success)
+            var userName = User.Identity?.Name;
+            if (string.IsNullOrEmpty(userName))
             {
-                return NotFound("Post not found or could not be deleted.");
+                return Unauthorized(new { message = "User is not authenticated." });
             }
 
-            // Возвращаем успешный ответ
-            return NoContent();
-        }
+            var post = await _postService.GetPostByHashAsync(postHash);
+            if (post == null)
+            {
+                return NotFound(new { message = "Post not found" });
+            }
 
+            if (post.PostAuthor.UserName != userName)
+            {
+                return Forbid("You are not authorized to delete this post.");
+            }
+
+            string containerName = post.PostAuthor.UserName.ToLower();
+
+            try
+            {
+                await _blobService.DeleteBlobAsync(containerName, post.PostHash);
+            }
+            catch (Exception)
+            {
+                return BadRequest(new { message = "Error deleting file from Blob Storage" });
+            }
+
+            var success = await _postService.DeletePostAsync(postHash);
+
+            if (!success)
+            {
+                return NotFound(new { message = "Post not found" });
+            }
+
+            return Ok(new { message = "Post successfully deleted" });
+        }
     }
 }
