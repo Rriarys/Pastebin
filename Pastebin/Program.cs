@@ -100,13 +100,24 @@ namespace Pastebin
                     };
                 });
 
-            // Razor Pages (если они требуются)
-            builder.Services.AddRazorPages();
+            // Добавляем политику CORS
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowLocalhost", policy =>
+                {
+                    policy.WithOrigins("https://localhost:5500")  // или другой адрес клиента
+                        .AllowAnyHeader()
+                        .AllowAnyMethod()
+                        .AllowCredentials();
+                });
+            });
 
             builder.Services.AddAuthorization();
-            builder.Services.AddControllers();
 
             var app = builder.Build();
+
+            // Применяем CORS
+            app.UseCors("AllowLocalhost");
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
@@ -118,7 +129,6 @@ namespace Pastebin
             app.UseHttpsRedirection();
             app.UseAuthentication();
             app.UseAuthorization();
-            app.MapRazorPages();
             app.MapControllers();
             app.Run();
         }

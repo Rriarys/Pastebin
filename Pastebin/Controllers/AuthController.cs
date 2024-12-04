@@ -67,6 +67,14 @@ namespace Pastebin.Controllers
             return Ok("Доступ к защищенному ресурсу разрешен!");
         }
 
+        [HttpPost("logout")]
+        public IActionResult Logout()
+        {
+            // JWT
+            // Токены автоматически теряют силу по истечении времени
+            // Удаляю его из localstorage через Js
+            return Ok(new { message = "Выход успешен" });
+        }
     }
 
 }
