@@ -18,7 +18,7 @@ namespace Pastebin.Controllers
             _blobService = blobService;
         }
 
-        // POST: api/posts
+        // POST: api/post
         [HttpPost]
         public async Task<IActionResult> CreatePost([FromForm] CreatePostDto createPostDto)
         {
@@ -42,6 +42,9 @@ namespace Pastebin.Controllers
                 return BadRequest(new { message = "User not found" });
             }
 
+            // Генерация ссылки на файл в Blob Storage
+            string blobUrl = await _blobService.GetBlobUrlAsync(post.PostAuthor.UserName.ToLower(), post.PostHash);
+
             var postDto = new PostDto
             {
                 PostHash = post.PostHash,
@@ -57,13 +60,14 @@ namespace Pastebin.Controllers
                 {
                     UserId = post.PostAuthorId,
                     UserName = userName
-                }
+                },
+                FileUrl = blobUrl // Добавление ссылки на файл
             };
 
             return CreatedAtAction(nameof(GetPost), new { postHash = post.PostHash }, postDto);
         }
 
-        // GET: api/posts/{postHash}
+        // GET: api/post/{postHash}
         [HttpGet("{postHash}")]
         public async Task<IActionResult> GetPost(string postHash)
         {
@@ -73,6 +77,8 @@ namespace Pastebin.Controllers
             {
                 return NotFound(new { message = "Post not found" });
             }
+            // Получаем ссылку на файл в Blob Storage
+            string blobUrl = await _blobService.GetBlobUrlAsync(post.PostAuthor.UserName.ToLower(), post.PostHash);
 
             var postDto = new PostDto
             {
@@ -89,13 +95,14 @@ namespace Pastebin.Controllers
                 {
                     UserId = post.PostAuthorId,
                     UserName = post.PostAuthor.UserName
-                }
+                },
+                FileUrl = blobUrl // Добавление ссылки на файл
             };
 
             return Ok(postDto);
         }
 
-        // DELETE: api/posts/{postHash}
+        // DELETE: api/post/{postHash}
         [HttpDelete("{postHash}")]
         public async Task<IActionResult> DeletePost(string postHash)
         {

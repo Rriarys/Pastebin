@@ -14,30 +14,29 @@ namespace Pastebin.Services
 
         public async Task<string> UploadTextAsync(string containerName, string fileName, string content)
         {
-            // Нормализуем имя контейнера (убираем недопустимые символы)
             containerName = NormalizeBlobName(containerName);
             fileName = NormalizeBlobName(fileName);
 
             var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
-            await containerClient.CreateIfNotExistsAsync();
+            await containerClient.CreateIfNotExistsAsync(); // Создает контейнер, если он отсутствует.
 
             var blobClient = containerClient.GetBlobClient(fileName);
 
             using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(content));
             try
             {
+                // Загружаем текст в blob.
                 await blobClient.UploadAsync(stream, overwrite: true);
             }
             catch (Exception ex)
             {
-                // Логируем ошибку
                 throw new InvalidOperationException("Error uploading blob", ex);
             }
 
-            return blobClient.Uri.ToString();
+            return blobClient.Uri.ToString(); // Возвращает прямой URI до файла.
         }
-       
-        public async Task<string> GetBlobUrlAsync(string containerName, string fileName) // Асинхронен специально для будущих функций
+
+        public async Task<string> GetBlobUrlAsync(string containerName, string fileName)
         {
             containerName = NormalizeBlobName(containerName);
             fileName = NormalizeBlobName(fileName);
@@ -45,10 +44,10 @@ namespace Pastebin.Services
             var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
             var blobClient = containerClient.GetBlobClient(fileName);
 
+            // Прямой URL для blob объекта.
             return blobClient.Uri.ToString();
         }
 
-        // Реализация метода удаления файла
         public async Task DeleteBlobAsync(string containerName, string fileName)
         {
             containerName = NormalizeBlobName(containerName);
@@ -57,13 +56,13 @@ namespace Pastebin.Services
             var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
             var blobClient = containerClient.GetBlobClient(fileName);
 
-            // Удаляем файл, если он существует
+            // Удаляет blob, если он существует.
             await blobClient.DeleteIfExistsAsync();
         }
 
         private string NormalizeBlobName(string name)
         {
-            // Нормализуем имя: делаем его строчным и заменяем пробелы и другие недопустимые символы
+            // Преобразует имя в нижний регистр и заменяет пробелы и подчеркивания на тире.
             return name.ToLower().Replace(" ", "-").Replace("_", "-");
         }
     }

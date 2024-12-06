@@ -14,5 +14,6 @@
 
         // Можно также добавить информацию об авторе, если это важно
         public required UserDto PostAuthor { get; set; }  // Информация о пользователе (навигационное свойство)
+        public required string FileUrl { get; set; } // Ссылка на файл
     }
 }

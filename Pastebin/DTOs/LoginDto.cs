@@ -1,6 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace Pastebin.DTOs
+﻿namespace Pastebin.DTOs
 {
     public class LoginDto
     {

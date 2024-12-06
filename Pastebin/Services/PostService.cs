@@ -22,7 +22,7 @@ namespace Pastebin.Services
         public async Task<Post?> CreatePostAsync(string title, string content, string userName, TimeSpan ttl, bool isPublic)
         {
             string originalFileName = $"{Guid.NewGuid()}.txt";
-            string hashedFileName = _hashService.GenerateHash(originalFileName).Substring(0, 12);
+            string hashedFileName = _hashService.GenerateHash(originalFileName).Substring(0, 12) + ".txt";
 
             string containerName = userName.ToLower();
             await _blobService.UploadTextAsync(containerName, hashedFileName, content);
