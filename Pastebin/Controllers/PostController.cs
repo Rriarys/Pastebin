@@ -11,13 +11,11 @@ namespace Pastebin.Controllers
     {
         private readonly PostService _postService;
         private readonly IBlobService _blobService;
-        private readonly PostCleanupService _postCleanupService;
 
-        public PostController(PostService postService, IBlobService blobService, PostCleanupService postCleanupService)
+        public PostController(PostService postService, IBlobService blobService)
         {
             _postService = postService;
             _blobService = blobService;
-            _postCleanupService = postCleanupService;
         }
 
         // POST: api/post
@@ -107,7 +105,7 @@ namespace Pastebin.Controllers
                     FileUrl = blobUrlDisposable
                 };
 
-                
+                //  Тут не доделано
 
                 return Ok(postDtoDisposable);
             }
