@@ -15,5 +15,8 @@
         // Можно также добавить информацию об авторе, если это важно
         public required UserDto PostAuthor { get; set; }  // Информация о пользователе (навигационное свойство)
         public required string FileUrl { get; set; } // Ссылка на файл
+
+        // Дата, когда пост должен быть удален (для TTL)
+        public DateTime? PostExpirationDate { get; set; } // Nullable, так как может быть отсутствовать для вечных постов
     }
 }

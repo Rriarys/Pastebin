@@ -45,6 +45,12 @@ namespace Pastebin.Services
                 IsPublic = isPublic
             };
 
+            // Если TTL задан, вычисляем дату истечения
+            if (ttl != TimeSpan.Zero && ttl != TimeSpan.FromHours(999))
+            {
+                post.PostExpirationDate = post.PostCreationDate + ttl;
+            }
+
             _context.Posts.Add(post);
             await _context.SaveChangesAsync();
 

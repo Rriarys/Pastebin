@@ -7,5 +7,7 @@
         Task<string> GetBlobUrlAsync(string containerName, string fileName);
 
         Task DeleteBlobAsync(string containerName, string fileName);
+
+        Task<bool> IsBlobStorageAvailableAsync(string userName);
     }
 }

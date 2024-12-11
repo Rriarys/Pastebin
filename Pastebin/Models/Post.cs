@@ -20,5 +20,8 @@
 
         // Навигационное свойство для связи с User
         public required User PostAuthor { get; set; }
+
+        // Дата, когда пост должен быть удален (для TTL)
+        public DateTime? PostExpirationDate { get; set; } // Nullable, так как может быть отсутствовать для вечных постов
     }
 }

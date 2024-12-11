@@ -65,5 +65,29 @@ namespace Pastebin.Services
             // Преобразует имя в нижний регистр и заменяет пробелы и подчеркивания на тире.
             return name.ToLower().Replace(" ", "-").Replace("_", "-");
         }
+        public async Task<bool> IsBlobStorageAvailableAsync(string userName)
+        {
+            try
+            {
+                // Нормализуем имя пользователя и получаем контейнер для него
+                string containerName = NormalizeBlobName(userName.ToLower());
+
+                // Проверяем контейнер, принадлежащий пользователю
+                var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
+
+                // Пытаемся получить хотя бы один объект в контейнере
+                await foreach (var blobItem in containerClient.GetBlobsAsync())
+                {
+                    // Если можем получить хотя бы один объект, значит контейнер доступен
+                    return true;
+                }
+            }
+            catch (Exception)
+            {
+                // В случае ошибки доступ к контейнеру невозможен
+                return false;
+            }
+            return false; // Контейнер пуст или ошибка доступа
+        }
     }
 }

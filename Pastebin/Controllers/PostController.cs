@@ -11,11 +11,13 @@ namespace Pastebin.Controllers
     {
         private readonly PostService _postService;
         private readonly IBlobService _blobService;
+        private readonly PostCleanupService _postCleanupService;
 
-        public PostController(PostService postService, IBlobService blobService)
+        public PostController(PostService postService, IBlobService blobService, PostCleanupService postCleanupService)
         {
             _postService = postService;
             _blobService = blobService;
+            _postCleanupService = postCleanupService;
         }
 
         // POST: api/post
@@ -54,6 +56,7 @@ namespace Pastebin.Controllers
                 UserName = userName,
                 PostCreationDate = post.PostCreationDate,
                 PostTTL = post.PostTTL,
+                PostExpirationDate = post.PostExpirationDate,
                 PostPopularityScore = post.PostPopularityScore,
                 IsPublic = post.IsPublic,
                 PostAuthor = new UserDto
@@ -77,6 +80,45 @@ namespace Pastebin.Controllers
             {
                 return NotFound(new { message = "Post not found" });
             }
+            
+            // Disposable - удаляем сразу
+            if (post.PostTTL == TimeSpan.Zero)
+            {
+                // Возвращаем данные поста пользователю
+                string blobUrlDisposable = await _blobService.GetBlobUrlAsync(post.PostAuthor.UserName.ToLower(), post.PostHash);
+
+                var postDtoDisposable = new PostDto
+                {
+                    PostHash = post.PostHash,
+                    PostTitle = post.PostTitle,
+                    PostID = post.PostID,
+                    PostAuthorId = post.PostAuthorId,
+                    UserName = post.PostAuthor.UserName,
+                    PostCreationDate = post.PostCreationDate,
+                    PostTTL = post.PostTTL,
+                    PostExpirationDate = post.PostExpirationDate,
+                    PostPopularityScore = post.PostPopularityScore,
+                    IsPublic = post.IsPublic,
+                    PostAuthor = new UserDto
+                    {
+                        UserId = post.PostAuthorId,
+                        UserName = post.PostAuthor.UserName
+                    },
+                    FileUrl = blobUrlDisposable
+                };
+
+                
+
+                return Ok(postDtoDisposable);
+            }
+
+            // Проверяем истек ли TTL
+            if (post.PostExpirationDate.HasValue && post.PostExpirationDate <= DateTime.UtcNow)
+            {
+                return NotFound(new { message = "Post has expired and was deleted" }); // Мы говорим что пост удален, но по факту он будет удалян фоновым сервисом при следующей итерации :)
+            }
+
+
             // Получаем ссылку на файл в Blob Storage
             string blobUrl = await _blobService.GetBlobUrlAsync(post.PostAuthor.UserName.ToLower(), post.PostHash);
 
@@ -89,6 +131,7 @@ namespace Pastebin.Controllers
                 UserName = post.PostAuthor.UserName,
                 PostCreationDate = post.PostCreationDate,
                 PostTTL = post.PostTTL,
+                PostExpirationDate = post.PostExpirationDate,
                 PostPopularityScore = post.PostPopularityScore,
                 IsPublic = post.IsPublic,
                 PostAuthor = new UserDto
