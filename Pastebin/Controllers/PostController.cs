@@ -1,4 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Pastebin.Data;
 using Pastebin.DTOs;
 using Pastebin.Interfaces;
 using Pastebin.Services;
@@ -11,11 +13,13 @@ namespace Pastebin.Controllers
     {
         private readonly PostService _postService;
         private readonly IBlobService _blobService;
+        private readonly ApplicationDbContext _context;
 
-        public PostController(PostService postService, IBlobService blobService)
+        public PostController(PostService postService, IBlobService blobService, ApplicationDbContext context)
         {
             _postService = postService;
             _blobService = blobService;
+            _context = context;
         }
 
         // POST: api/post
@@ -80,7 +84,7 @@ namespace Pastebin.Controllers
             }
             
             // Disposable - удаляем сразу
-            if (post.PostTTL == TimeSpan.Zero)
+            if (post.PostTTL == TimeSpan.Zero && post.PostExpirationDate == null)
             {
                 // Возвращаем данные поста пользователю
                 string blobUrlDisposable = await _blobService.GetBlobUrlAsync(post.PostAuthor.UserName.ToLower(), post.PostHash);
@@ -105,7 +109,12 @@ namespace Pastebin.Controllers
                     FileUrl = blobUrlDisposable
                 };
 
-                //  Тут не доделано
+                // Обновляем PostExpirationDate
+                post.PostExpirationDate = post.PostCreationDate;
+
+                // Сохраняем изменения в базе данных
+                _context.Posts.Update(post);
+                await _context.SaveChangesAsync();
 
                 return Ok(postDtoDisposable);
             }
