@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Pastebin.Data;
 using Pastebin.DTOs;
 using Pastebin.Interfaces;
