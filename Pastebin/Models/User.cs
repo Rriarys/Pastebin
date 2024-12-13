@@ -12,6 +12,9 @@
 
         public int UserPopularityScore { get; set; }
 
+        public int LikesBalance { get; set; } = 10; // Начальное значение лайков
+
+
         // Коллкция постов юзера
         public ICollection<Post> Posts { get; set; }
 

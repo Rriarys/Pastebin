@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Pastebin.Data;
 using Pastebin.DTOs;
 using Pastebin.Interfaces;
@@ -149,6 +150,73 @@ namespace Pastebin.Controllers
             };
 
             return Ok(postDto);
+        }
+
+        // PATCH: api/post/{postHash}/popularity
+        [HttpPatch("{postHash}/popularity")]
+        public async Task<IActionResult> IncrementPostPopularity(string postHash)
+        {
+            // Проверяем, что пользователь аутентифицирован и имеем доступ к имени
+            var userId = User?.Identity?.Name;
+            if (userId == null)
+            {
+                return Unauthorized(new { message = "User is not authenticated." });
+            }
+
+            // Получаем пост по хэшу
+            var post = await _postService.GetPostByHashAsync(postHash);
+            if (post == null)
+            {
+                return NotFound(new { message = "Post not found." });
+            }
+
+            // Проверяем, является ли пост публичным
+            if (!post.IsPublic)
+            {
+                return BadRequest(new { message = "Cannot like a private post." });
+            }
+
+            // Получаем пользователя из базы данных
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserName == userId);
+            if (user == null)
+            {
+                return Unauthorized(new { message = "User not found." });
+            }
+
+            // Проверяем баланс лайков
+            if (user.LikesBalance <= 0)
+            {
+                return BadRequest(new { message = "Not enough likes available." });
+            }
+
+            // Проверяем, не ставит ли пользователь лайк на свой собственный пост
+            if (post.PostAuthor.UserId == user.UserId)
+            {
+                return BadRequest(new { message = "Cannot like your own post." });
+            }
+
+            try
+            {
+                // Уменьшаем баланс лайков пользователя
+                user.LikesBalance -= 1;
+
+                // Увеличиваем популярность поста
+                post.PostPopularityScore += 1;
+
+                // Обновляем данные в базе
+                _context.Users.Update(user);
+                _context.Posts.Update(post);
+
+                await _context.SaveChangesAsync();
+
+                return Ok(new { message = "Post popularity incremented successfully." });
+            }
+            catch (Exception ex)
+            {
+                // Логируем ошибку
+                Console.WriteLine($"Error incrementing post popularity: {ex.Message}");
+                return StatusCode(500, new { message = "An error occurred while incrementing post popularity." });
+            }
         }
 
         // DELETE: api/post/{postHash}
