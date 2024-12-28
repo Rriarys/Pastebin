@@ -28,12 +28,17 @@ public class UserPopularityCalculationService : BackgroundService
                 {
                     // Фильтруем только публичные посты
                     var userPosts = dbContext.Posts
-                        .Where(p => p.PostAuthorId == user.UserId && p.IsPublic)
+                        .Where(p => p.PostAuthorId == user.UserId && p.IsPublic && p.PostTTLSeconds == 3596400)
                         .ToList();
 
                     if (userPosts.Count > 0)
                     {
-                        user.UserPopularityScore = userPosts.Sum(p => p.PostPopularityScore) / userPosts.Count;
+                        var now = DateTime.UtcNow;
+
+                        // Вычисляем популярность, уменьшая влияние старых постов
+                        user.UserPopularityScore = userPosts
+                            .Select(p => p.PostPopularityScore * (1 / (1 + (now - p.PostCreationDate).Days))) // Уменьшаем популярность старых постов
+                            .Sum() / userPosts.Count;
                     }
                     else
                     {
