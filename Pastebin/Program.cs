@@ -85,6 +85,8 @@ namespace Pastebin
             builder.Services.AddScoped<UserService>();
             builder.Services.AddScoped<TokenService>();
             builder.Services.AddHostedService<PostCleanupService>();
+            builder.Services.AddHostedService<LikesBalanceResetService>();
+            builder.Services.AddHostedService<UserPopularityCalculationService>();
 
             // Настройка аутентификации
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

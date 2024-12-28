@@ -55,7 +55,7 @@ public class PostCleanupService : BackgroundService
                 _logger.LogError(ex, "Error during post cleanup.");
             }
 
-            await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken); // Пауза перед следующей итерацией
+            await Task.Delay(TimeSpan.FromMinutes(2), stoppingToken); // Пауза перед следующей итерацией
         }
     }
 }
