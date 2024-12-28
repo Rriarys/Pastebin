@@ -72,7 +72,7 @@ namespace Pastebin.Controllers
             return CreatedAtAction(nameof(GetPost), new { postHash = post.PostHash }, postDto);
         }
 
-        // GET: api/post/{postHash}
+        // GET: api/post/{postHash} - Вернет мета данные и даст ссылку на скачивание напрямую из блоб. 
         [HttpGet("{postHash}")]
         public async Task<IActionResult> GetPost(string postHash)
         {
@@ -150,6 +150,57 @@ namespace Pastebin.Controllers
             };
 
             return Ok(postDto);
+        }
+
+        // GET: api/post/{postHash}/file - Вернет копию содержимого файла для чтения и работы в браузере
+        [HttpGet("{postHash}/file")]
+        public async Task<IActionResult> GetPostFileContent(string postHash)
+        {
+            var post = await _postService.GetPostByHashAsync(postHash);
+
+            if (post == null)
+            {
+                return NotFound(new { message = "Post not found" });
+            }
+
+            // Disposable - удаляем сразу
+            if (post.PostTTLSeconds == 0 && post.PostExpirationDate == null)
+            {
+                // Получаем содержимое файла из Blob Storage
+                var fileContentDisposable = await _blobService.GetBlobContentAsync(post.PostAuthor.UserName.ToLower(), post.PostHash);
+
+                if (fileContentDisposable == null)
+                {
+                    return NotFound(new { message = "File not found in Blob Storage" });
+                }
+
+                // Обновляем PostExpirationDate, чтобы отметить, что файл использован
+                post.PostExpirationDate = DateTime.UtcNow;
+
+                // Сохраняем изменения в базе данных
+                _context.Posts.Update(post);
+                await _context.SaveChangesAsync();
+
+                // Возвращаем файл
+                return File(fileContentDisposable, "application/octet-stream", $"{post.PostTitle}_disposable.txt");
+            }
+
+            // Проверяем истек ли TTL
+            if (post.PostExpirationDate.HasValue && post.PostExpirationDate <= DateTime.UtcNow)
+            {
+                return NotFound(new { message = "Post has expired and was deleted" });
+            }
+
+            // Получаем содержимое файла из Blob Storage для обычных постов
+            var fileContent = await _blobService.GetBlobContentAsync(post.PostAuthor.UserName.ToLower(), post.PostHash);
+
+            if (fileContent == null)
+            {
+                return NotFound(new { message = "File not found in Blob Storage" });
+            }
+
+            // Возвращаем файл
+            return File(fileContent, "application/octet-stream", $"{post.PostTitle}.txt");
         }
 
         // PATCH: api/post/{postHash}/popularity

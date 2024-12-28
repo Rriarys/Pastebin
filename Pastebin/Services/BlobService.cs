@@ -48,6 +48,24 @@ namespace Pastebin.Services
             return blobClient.Uri.ToString();
         }
 
+        public async Task<byte[]> GetBlobContentAsync(string containerName, string postHash)
+        {
+            var blobClient = _blobServiceClient.GetBlobContainerClient(containerName);
+            var blob = blobClient.GetBlobClient(postHash);
+
+            if (!await blob.ExistsAsync())
+            {
+                return null; // Файл не найден
+            }
+
+            var download = await blob.DownloadAsync();
+            using (var memoryStream = new MemoryStream())
+            {
+                await download.Value.Content.CopyToAsync(memoryStream);
+                return memoryStream.ToArray(); // Возвращаем содержимое файла
+            }
+        }
+
         public async Task DeleteBlobAsync(string containerName, string fileName)
         {
             containerName = NormalizeBlobName(containerName);
