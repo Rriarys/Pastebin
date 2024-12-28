@@ -19,7 +19,7 @@ namespace Pastebin.Services
         }
 
         // Метод для создания поста
-        public async Task<Post?> CreatePostAsync(string title, string content, string userName, TimeSpan ttl, bool isPublic)
+        public async Task<Post?> CreatePostAsync(string title, string content, string userName, int ttl, bool isPublic)
         {
             string originalFileName = $"{Guid.NewGuid()}.txt";
             string hashedFileName = _hashService.GenerateHash(originalFileName).Substring(0, 12) + ".txt";
@@ -40,15 +40,15 @@ namespace Pastebin.Services
                 PostAuthorId = postAuthor.UserId,
                 PostAuthor = postAuthor,
                 PostCreationDate = DateTime.UtcNow,
-                PostTTL = ttl,
+                PostTTLSeconds = ttl,
                 PostPopularityScore = 0,
                 IsPublic = isPublic
             };
 
             // Если TTL задан, вычисляем дату истечения
-            if (ttl != TimeSpan.Zero && ttl != TimeSpan.FromHours(999))
+            if (post.PostTTLSeconds != 0 && post.PostTTLSeconds != 999 * 3600) // 999 часов в секундах
             {
-                post.PostExpirationDate = post.PostCreationDate + ttl;
+                post.PostExpirationDate = post.PostCreationDate + TimeSpan.FromSeconds(post.PostTTLSeconds);
             }
 
             _context.Posts.Add(post);

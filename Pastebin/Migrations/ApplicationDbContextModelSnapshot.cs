@@ -49,8 +49,8 @@ namespace Pastebin.Migrations
                     b.Property<int>("PostPopularityScore")
                         .HasColumnType("int");
 
-                    b.Property<TimeSpan>("PostTTL")
-                        .HasColumnType("time");
+                    b.Property<int>("PostTTLSeconds")
+                        .HasColumnType("int");
 
                     b.Property<string>("PostTitle")
                         .IsRequired()

@@ -37,7 +37,7 @@ namespace Pastebin.Controllers
                 createPostDto.PostTitle,
                 createPostDto.Text,
                 userName,
-                createPostDto.PostTTL,
+                createPostDto.PostTTLSeconds,
                 createPostDto.IsPublic
             );
 
@@ -57,7 +57,7 @@ namespace Pastebin.Controllers
                 PostAuthorId = post.PostAuthorId,
                 UserName = userName,
                 PostCreationDate = post.PostCreationDate,
-                PostTTL = post.PostTTL,
+                PostTTLSeconds = post.PostTTLSeconds,
                 PostExpirationDate = post.PostExpirationDate,
                 PostPopularityScore = post.PostPopularityScore,
                 IsPublic = post.IsPublic,
@@ -84,7 +84,7 @@ namespace Pastebin.Controllers
             }
             
             // Disposable - удаляем сразу
-            if (post.PostTTL == TimeSpan.Zero && post.PostExpirationDate == null)
+            if (post.PostTTLSeconds == 0 && post.PostExpirationDate == null)
             {
                 // Возвращаем данные поста пользователю
                 string blobUrlDisposable = await _blobService.GetBlobUrlAsync(post.PostAuthor.UserName.ToLower(), post.PostHash);
@@ -97,7 +97,7 @@ namespace Pastebin.Controllers
                     PostAuthorId = post.PostAuthorId,
                     UserName = post.PostAuthor.UserName,
                     PostCreationDate = post.PostCreationDate,
-                    PostTTL = post.PostTTL,
+                    PostTTLSeconds = post.PostTTLSeconds,
                     PostExpirationDate = post.PostExpirationDate,
                     PostPopularityScore = post.PostPopularityScore,
                     IsPublic = post.IsPublic,
@@ -137,7 +137,7 @@ namespace Pastebin.Controllers
                 PostAuthorId = post.PostAuthorId,
                 UserName = post.PostAuthor.UserName,
                 PostCreationDate = post.PostCreationDate,
-                PostTTL = post.PostTTL,
+                PostTTLSeconds = post.PostTTLSeconds,
                 PostExpirationDate = post.PostExpirationDate,
                 PostPopularityScore = post.PostPopularityScore,
                 IsPublic = post.IsPublic,

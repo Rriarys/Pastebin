@@ -5,7 +5,7 @@
         public required string PostTitle { get; set; }  // Название поста
 
         public required string Text { get; set; }  // Текст поста
-        public TimeSpan PostTTL { get; set; }  // Время жизни поста (TTL)
+        public int PostTTLSeconds { get; set; }  // Время жизни поста (TTL)
         public bool IsPublic { get; set; }  // Публичность поста
     }
 }

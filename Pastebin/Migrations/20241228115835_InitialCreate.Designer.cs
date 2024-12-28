@@ -12,8 +12,8 @@ using Pastebin.Data;
 namespace Pastebin.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20241128193826_AddUserEmailAndPasswordHash")]
-    partial class AddUserEmailAndPasswordHash
+    [Migration("20241228115835_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -42,6 +42,9 @@ namespace Pastebin.Migrations
                     b.Property<DateTime>("PostCreationDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<DateTime?>("PostExpirationDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("PostHash")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -49,8 +52,12 @@ namespace Pastebin.Migrations
                     b.Property<int>("PostPopularityScore")
                         .HasColumnType("int");
 
-                    b.Property<TimeSpan>("PostTTL")
-                        .HasColumnType("time");
+                    b.Property<int>("PostTTLSeconds")
+                        .HasColumnType("int");
+
+                    b.Property<string>("PostTitle")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("PostID");
 
@@ -70,6 +77,9 @@ namespace Pastebin.Migrations
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("LikesBalance")
+                        .HasColumnType("int");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()

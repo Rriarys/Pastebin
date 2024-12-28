@@ -12,7 +12,7 @@
 
         public DateTime PostCreationDate { get; set; }
 
-        public TimeSpan PostTTL { get; set; }  // Время жизни
+        public int PostTTLSeconds { get; set; }  // Время жизни в секундах
 
         public int PostPopularityScore { get; set; }
 

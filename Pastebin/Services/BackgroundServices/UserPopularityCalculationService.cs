@@ -50,7 +50,7 @@ public class UserPopularityCalculationService : BackgroundService
                 _logger.LogError(ex, "Error during user popularity score calculation.");
             }
 
-            await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken);
+            await Task.Delay(TimeSpan.FromMinutes(3), stoppingToken);
            /* await Task.Delay(TimeSpan.FromHours(6), stoppingToken); // Интервал между выполнениями*/
         }
     }

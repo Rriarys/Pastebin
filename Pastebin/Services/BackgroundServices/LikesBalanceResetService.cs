@@ -37,7 +37,7 @@ public class LikesBalanceResetService : BackgroundService
                 _logger.LogError(ex, "Error during likes balance reset.");
             }
 
-            await Task.Delay(TimeSpan.FromMinutes(3), stoppingToken);
+            await Task.Delay(TimeSpan.FromMinutes(2), stoppingToken);
            /* await Task.Delay(TimeSpan.FromHours(24), stoppingToken); // Интервал между выполнениями*/
         }
     }

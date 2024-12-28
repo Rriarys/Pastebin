@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Pastebin.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialMigration : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -18,7 +18,10 @@ namespace Pastebin.Migrations
                     UserId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     UserName = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    UserPopularityScore = table.Column<int>(type: "int", nullable: false)
+                    Email = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    PasswordHash = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    UserPopularityScore = table.Column<int>(type: "int", nullable: false),
+                    LikesBalance = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -32,11 +35,13 @@ namespace Pastebin.Migrations
                     PostID = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     PostHash = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    PostTitle = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     PostAuthorId = table.Column<int>(type: "int", nullable: false),
                     PostCreationDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    PostTTL = table.Column<TimeSpan>(type: "time", nullable: false),
+                    PostTTLSeconds = table.Column<int>(type: "int", nullable: false),
                     PostPopularityScore = table.Column<int>(type: "int", nullable: false),
-                    IsPublic = table.Column<bool>(type: "bit", nullable: false)
+                    IsPublic = table.Column<bool>(type: "bit", nullable: false),
+                    PostExpirationDate = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
