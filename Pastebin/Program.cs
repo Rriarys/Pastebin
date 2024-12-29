@@ -10,6 +10,7 @@ using Pastebin.Models;
 using Microsoft.OpenApi.Models;
 using Azure.Storage.Blobs;
 using Pastebin.Interfaces;
+using Pastebin.Redis;
 
 namespace Pastebin
 {
@@ -87,6 +88,10 @@ namespace Pastebin
             builder.Services.AddHostedService<PostCleanupService>();
             builder.Services.AddHostedService<LikesBalanceResetService>();
             builder.Services.AddHostedService<UserPopularityCalculationService>();
+
+            builder.Services.AddSingleton<IRedisService, RedisService>();
+            builder.Services.AddSingleton<RedisService>();
+            builder.Services.AddHostedService<RedisBackgroundService>();
 
             // Настройка аутентификации
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
