@@ -10,8 +10,6 @@
 
         public required string PasswordHash { get; set; } // Хэш пароля
 
-        public int UserPopularityScore { get; set; }
-
         public int LikesBalance { get; set; } = 10; // Начальное значение лайков
 
 

@@ -37,7 +37,6 @@ namespace Pastebin.Services
                 UserName = registerDto.UserName,
                 Email = registerDto.Email,
                 PasswordHash = passwordHash,
-                UserPopularityScore = 0 // Начальный рейтинг
             };
 
             // Добавление пользователя в базу данных
