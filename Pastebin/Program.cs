@@ -87,6 +87,11 @@ namespace Pastebin
             builder.Services.AddHostedService<PostCleanupService>();
             builder.Services.AddHostedService<LikesBalanceResetService>();
 
+            // Регистрация RedisService
+            builder.Services.AddSingleton<RedisService>();
+            // Регистрация фона сервиса RedisSyncService
+            builder.Services.AddHostedService<RedisSyncService>();
+
             // Настройка аутентификации
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>
