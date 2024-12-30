@@ -20,7 +20,11 @@ namespace Pastebin
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.
-            builder.Services.AddControllers();
+            builder.Services.AddControllers()
+                .AddJsonOptions(options =>
+                {
+                    options.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
+                });
 
             // Swagger
             builder.Services.AddEndpointsApiExplorer();
@@ -91,6 +95,7 @@ namespace Pastebin
             builder.Services.AddSingleton<RedisService>();
             // Регистрация фона сервиса RedisSyncService
             builder.Services.AddHostedService<RedisSyncService>();
+
 
             // Настройка аутентификации
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

@@ -1,4 +1,7 @@
-﻿namespace Pastebin.DTOs
+﻿using System;
+using System.Text.Json.Serialization;
+
+namespace Pastebin.DTOs
 {
     public class PostDto
     {
@@ -6,7 +9,10 @@
         public required string PostHash { get; set; }  // Хэш поста
         public required string PostTitle { get; set; } // Тайтл
         public required int PostAuthorId { get; set; }  // ID автора поста
-        public required string UserName { get; set; }  // Имя автора (из User)
+
+        [JsonIgnore] // Игнорируем это поле, так как оно не приходит из Redis
+        public string UserName { get; set; }  // Имя автора (из User)
+
         public DateTime PostCreationDate { get; set; }  // Дата создания поста
         public int PostTTLSeconds { get; set; }  // Время жизни поста (TTL)
         public int PostPopularityScore { get; set; }  // Рейтинг поста
@@ -14,7 +20,9 @@
 
         // Можно также добавить информацию об авторе, если это важно
         public required UserDto PostAuthor { get; set; }  // Информация о пользователе (навигационное свойство)
-        public required string FileUrl { get; set; } // Ссылка на файл
+
+        [JsonIgnore] // Игнорируем это поле, так как оно не приходит из Redis
+        public string FileUrl { get; set; } // Ссылка на файл
 
         // Дата, когда пост должен быть удален (для TTL)
         public DateTime? PostExpirationDate { get; set; } // Nullable, так как может быть отсутствовать для вечных постов

@@ -4,6 +4,7 @@ using Pastebin.Data;
 using Pastebin.DTOs;
 using Pastebin.Interfaces;
 using Pastebin.Services;
+using System.Text;
 
 namespace Pastebin.Controllers
 {
@@ -14,12 +15,14 @@ namespace Pastebin.Controllers
         private readonly PostService _postService;
         private readonly IBlobService _blobService;
         private readonly ApplicationDbContext _context;
+        private readonly RedisService _redisService;
 
-        public PostController(PostService postService, IBlobService blobService, ApplicationDbContext context)
+        public PostController(PostService postService, IBlobService blobService, ApplicationDbContext context, RedisService redisService)
         {
             _postService = postService;
             _blobService = blobService;
             _context = context;
+            _redisService = redisService;
         }
 
         // POST: api/post
@@ -76,6 +79,25 @@ namespace Pastebin.Controllers
         [HttpGet("{postHash}")]
         public async Task<IActionResult> GetPost(string postHash)
         {
+            // Сначала пытаемся получить метаданные и ссылку на файл из Redis
+            var postDtoFromRedis = await _redisService.GetPostMetadataAsync<PostDto>(postHash);
+            var fileContentFromRedis = await _redisService.GetFileContentAsync(postHash);
+
+            if (postDtoFromRedis != null && fileContentFromRedis != null)
+            {
+                // Если данные есть в Redis, возвращаем их
+                // Формируем ответ с метаданными и содержимым файла
+                var fileResult = File(fileContentFromRedis, "application/octet-stream", $"{postHash}");
+                postDtoFromRedis.FileUrl = Url.Action("GetPost", new { postHash });
+
+                // Возвращаем метаданные и файл в одном ответе
+                return Ok(new
+                {
+                    Metadata = postDtoFromRedis,
+                    File = fileResult
+                });
+            }
+
             var post = await _postService.GetPostByHashAsync(postHash);
 
             if (post == null)
@@ -156,6 +178,17 @@ namespace Pastebin.Controllers
         [HttpGet("{postHash}/file")]
         public async Task<IActionResult> GetPostFileContent(string postHash)
         {
+
+            // Сначала пытаемся получить содержимое файла из Redis
+            var fileContentFromRedis = await _redisService.GetFileContentAsync(postHash);
+
+            // Если содержимое файла есть в Redis, сразу возвращаем его
+            if (!string.IsNullOrEmpty(fileContentFromRedis))
+            {
+                var fileBytes = Encoding.UTF8.GetBytes(fileContentFromRedis);
+                return File(fileBytes, "application/octet-stream", $"{postHash}.txt");
+            }
+
             var post = await _postService.GetPostByHashAsync(postHash);
 
             if (post == null)
